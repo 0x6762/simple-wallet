@@ -2,9 +2,8 @@
   <div>
     MATIC Balance: {{ maticBalance }}
     <br />
-
     <div v-for="(balance, token) in tokenBalances" :key="token">
-      {{ token }} Balance: {{ balance }}
+      {{ token }} Balance: {{ balance.amount }} ({{ balance.usdValue }} USD)
     </div>
   </div>
 </template>
@@ -12,6 +11,8 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue'
 import Web3 from 'web3'
+import axios from 'axios'
+import { erc20Abi } from './components/erc20abi.js'
 
 export default defineComponent({
   setup() {
@@ -21,109 +22,48 @@ export default defineComponent({
     onMounted(async () => {
       const web3 = new Web3('https://rpc-mainnet.maticvigil.com')
       const address = '0xc834bD2C217835E770b3Ba3d6c1D38eD45d5c291'
-      const tokens = {
-        stMATIC: '0x6d80113e533a2C0fe82EaBD35f1875DcEA89Ea97'
-        // Add other tokens here
-      }
-
-      const erc20Abi = [
-        {
-          constant: true,
-          inputs: [],
-          name: 'name',
-          outputs: [{ name: '', type: 'string' }],
-          payable: false,
-          type: 'function'
-        },
-        {
-          constant: true,
-          inputs: [],
-          name: 'totalSupply',
-          outputs: [{ name: '', type: 'uint256' }],
-          payable: false,
-          type: 'function'
-        },
-        {
-          constant: true,
-          inputs: [],
-          name: 'decimals',
-          outputs: [{ name: '', type: 'uint8' }],
-          payable: false,
-          type: 'function'
-        },
-        {
-          constant: true,
-          inputs: [{ name: '_owner', type: 'address' }],
-          name: 'balanceOf',
-          outputs: [{ name: 'balance', type: 'uint256' }],
-          payable: false,
-          type: 'function'
-        },
-        {
-          constant: false,
-          inputs: [
-            { name: '_to', type: 'address' },
-            { name: '_value', type: 'uint256' }
-          ],
-          name: 'transfer',
-          outputs: [],
-          payable: false,
-          type: 'function'
-        },
-        {
-          constant: true,
-          inputs: [],
-          name: 'symbol',
-          outputs: [{ name: '', type: 'string' }],
-          payable: false,
-          type: 'function'
-        },
-        {
-          constant: false,
-          inputs: [
-            { name: '_from', type: 'address' },
-            { name: '_to', type: 'address' },
-            { name: '_value', type: 'uint256' }
-          ],
-          name: 'transferFrom',
-          outputs: [],
-          payable: false,
-          type: 'function'
-        },
-        {
-          constant: false,
-          inputs: [
-            { name: '_spender', type: 'address' },
-            { name: '_value', type: 'uint256' }
-          ],
-          name: 'approve',
-          outputs: [],
-          payable: false,
-          type: 'function'
-        },
-        {
-          constant: true,
-          inputs: [
-            { name: '_owner', type: 'address' },
-            { name: '_spender', type: 'address' }
-          ],
-          name: 'allowance',
-          outputs: [{ name: 'remaining', type: 'uint256' }],
-          payable: false,
-          type: 'function'
-        }
+      const contractAddresses = [
+        '0x6d80113e533a2C0fe82EaBD35f1875DcEA89Ea97'
+        // Add other contract addresses here
       ]
 
       const balanceWei = await web3.eth.getBalance(address)
       maticBalance.value = web3.utils.fromWei(balanceWei, 'ether')
 
-      for (const token in tokens) {
-        const contract = new web3.eth.Contract(erc20Abi, tokens[token])
+      for (const contractAddress of contractAddresses) {
+        const contract = new web3.eth.Contract(erc20Abi, contractAddress)
         const tokenName = await contract.methods.name().call()
         const balanceWei = await contract.methods.balanceOf(address).call()
-        const balance = web3.utils.fromWei(balanceWei, 'ether')
+        let balance = web3.utils.fromWei(balanceWei, 'ether')
+
+        // Format the balance to display only three decimal places
+        balance = parseFloat(balance).toFixed(3)
+
+        // Convert the token name to a format that matches the CoinGecko API coin IDs
+        const coinId = tokenName.replace(/\s+/g, '-').toLowerCase()
+
+        // Fetch the current price of the token in USD
+        let priceInUsd = 0
+        try {
+          const response = await axios.get(
+            `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`
+          )
+          console.log(`Coin ID: ${coinId}`, response.data) // Update this line
+          priceInUsd = response.data[coinId]?.usd
+        } catch (error) {
+          console.error(`Error fetching price for coin ${coinId}:`, error)
+        }
+
+        if (!priceInUsd) {
+          console.error(`Unable to fetch price for coin ${coinId}`)
+          continue
+        }
+
+        // Calculate the balance in USD
+        const usdValue = parseFloat(balance) * priceInUsd
+
         if (parseFloat(balance) > 0) {
-          tokenBalances.value[tokenName] = balance
+          tokenBalances.value[tokenName] = { amount: balance, usdValue: usdValue.toFixed(2) }
         }
       }
     })
