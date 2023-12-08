@@ -1,85 +1,139 @@
-<script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+  <div>
+    MATIC Balance: {{ maticBalance }}
+    <br />
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
+    <div v-for="(balance, token) in tokenBalances" :key="token">
+      {{ token }} Balance: {{ balance }}
     </div>
-  </header>
-
-  <RouterView />
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
-}
+<script lang="ts">
+import { defineComponent, ref, onMounted } from 'vue'
+import Web3 from 'web3'
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
+export default defineComponent({
+  setup() {
+    const maticBalance = ref('Loading...')
+    const tokenBalances = ref({})
 
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
-}
+    onMounted(async () => {
+      const web3 = new Web3('https://rpc-mainnet.maticvigil.com')
+      const address = '0xc834bD2C217835E770b3Ba3d6c1D38eD45d5c291'
+      const tokens = {
+        stMATIC: '0x6d80113e533a2C0fe82EaBD35f1875DcEA89Ea97'
+        // Add other tokens here
+      }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
+      const erc20Abi = [
+        {
+          constant: true,
+          inputs: [],
+          name: 'name',
+          outputs: [{ name: '', type: 'string' }],
+          payable: false,
+          type: 'function'
+        },
+        {
+          constant: true,
+          inputs: [],
+          name: 'totalSupply',
+          outputs: [{ name: '', type: 'uint256' }],
+          payable: false,
+          type: 'function'
+        },
+        {
+          constant: true,
+          inputs: [],
+          name: 'decimals',
+          outputs: [{ name: '', type: 'uint8' }],
+          payable: false,
+          type: 'function'
+        },
+        {
+          constant: true,
+          inputs: [{ name: '_owner', type: 'address' }],
+          name: 'balanceOf',
+          outputs: [{ name: 'balance', type: 'uint256' }],
+          payable: false,
+          type: 'function'
+        },
+        {
+          constant: false,
+          inputs: [
+            { name: '_to', type: 'address' },
+            { name: '_value', type: 'uint256' }
+          ],
+          name: 'transfer',
+          outputs: [],
+          payable: false,
+          type: 'function'
+        },
+        {
+          constant: true,
+          inputs: [],
+          name: 'symbol',
+          outputs: [{ name: '', type: 'string' }],
+          payable: false,
+          type: 'function'
+        },
+        {
+          constant: false,
+          inputs: [
+            { name: '_from', type: 'address' },
+            { name: '_to', type: 'address' },
+            { name: '_value', type: 'uint256' }
+          ],
+          name: 'transferFrom',
+          outputs: [],
+          payable: false,
+          type: 'function'
+        },
+        {
+          constant: false,
+          inputs: [
+            { name: '_spender', type: 'address' },
+            { name: '_value', type: 'uint256' }
+          ],
+          name: 'approve',
+          outputs: [],
+          payable: false,
+          type: 'function'
+        },
+        {
+          constant: true,
+          inputs: [
+            { name: '_owner', type: 'address' },
+            { name: '_spender', type: 'address' }
+          ],
+          name: 'allowance',
+          outputs: [{ name: 'remaining', type: 'uint256' }],
+          payable: false,
+          type: 'function'
+        }
+      ]
 
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
+      const balanceWei = await web3.eth.getBalance(address)
+      maticBalance.value = web3.utils.fromWei(balanceWei, 'ether')
 
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
+      for (const token in tokens) {
+        const contract = new web3.eth.Contract(erc20Abi, tokens[token])
+        const tokenName = await contract.methods.name().call()
+        const balanceWei = await contract.methods.balanceOf(address).call()
+        const balance = web3.utils.fromWei(balanceWei, 'ether')
+        if (parseFloat(balance) > 0) {
+          tokenBalances.value[tokenName] = balance
+        }
+      }
+    })
 
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
+    return {
+      maticBalance,
+      tokenBalances
+    }
   }
+})
+</script>
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
-}
-</style>
+<style scoped></style>
