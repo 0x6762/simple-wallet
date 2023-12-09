@@ -1,5 +1,8 @@
 <template>
   <div class="main">
+    <div class="wrap-address">
+      <input type="text" class="address" placeholder="Input your address..." v-model="address" />
+    </div>
     <div class="total-balance">
       <p class="label">Total balance</p>
       <p class="value">${{ totalBalance.toFixed(2) }}</p>
@@ -29,12 +32,13 @@ import { erc20Abi } from './components/erc20abi.js'
 
 export default defineComponent({
   setup() {
+    const address = ref('')
     const tokenBalances = ref({})
 
     onMounted(async () => {
       const web3 = new Web3('https://rpc-mainnet.maticvigil.com')
       // Wallet address to check the balance of
-      const address = '0xc834bD2C217835E770b3Ba3d6c1D38eD45d5c291'
+      const addressValue = address.value
       //
       const contractAddresses = [
         '0x6d80113e533a2C0fe82EaBD35f1875DcEA89Ea97',
@@ -60,7 +64,7 @@ export default defineComponent({
       }
 
       // Get the MATIC balance of the address
-      const balanceWei = await web3.eth.getBalance(address)
+      const balanceWei = await web3.eth.getBalance(addressValue)
       let maticBalance = web3.utils.fromWei(balanceWei, 'ether')
 
       // Format the balance to display only three decimal places
