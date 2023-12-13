@@ -26,6 +26,7 @@ import { defineComponent, ref, onMounted, computed } from 'vue'
 import Web3 from 'web3'
 import axios from 'axios'
 import { erc20Abi } from './components/erc20abi.js'
+import BigNumber from 'bignumber.js'
 
 export default defineComponent({
   setup() {
@@ -90,25 +91,20 @@ export default defineComponent({
         const tokenName = token.tokenName
         const balanceWei = await contract.methods.balanceOf(address).call()
         const decimals = await contract.methods.decimals().call()
+
         console.log(`Token Name: ${tokenName}`)
+        console.log(`Balance Wei: ${balanceWei}`)
         console.log(`Decimals: ${decimals}`)
-        let balance
-        if (token.contractAddress === '0xc2132D05D31c914a87C6611C10748AEb04B58e8F') {
-          const ten = BigInt(10)
-          const bigIntDecimals = BigInt(decimals)
-          balance = Number(BigInt(balanceWei) / ten ** bigIntDecimals)
-        } else {
-          balance = web3.utils.fromWei(balanceWei, 'ether')
-        }
 
-        // Check if balance is a number before formatting
-        if (typeof balance === 'number') {
-          // Format the balance to display only three decimal places
-          balance = Number(balance.toFixed(3))
-        }
+        // Use BigNumber for calculations
+        let balance = new BigNumber(balanceWei).div(new BigNumber(10).pow(decimals))
 
-        // If the balance is zero, log a message and continue to the next token
-        if (balance === 0) {
+        // Convert to Number with desired precision before logging
+        balance = Number(balance.toFixed(3))
+        console.log(`Balance: ${balance}`)
+
+        // // Hide tokens with low balance
+        if (balance < 0.001) {
           console.log(`No balance for token ${tokenName}`)
           continue
         }
