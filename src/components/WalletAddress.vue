@@ -19,12 +19,9 @@ const inputValue = ref('')
 
 const updateWalletAddress = () => {
   walletAddress.value = inputValue.value
+  localStorage.setItem('walletAddress', inputValue.value)
+  inputValue.value = ''
 }
-
-watchEffect(() => {
-  // Store walletAddress in local storage whenever it changes
-  localStorage.setItem('walletAddress', walletAddress.value)
-})
 </script>
 
 <style lang="scss" scoped></style>
