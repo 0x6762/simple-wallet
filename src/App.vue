@@ -1,5 +1,6 @@
 <template>
   <div class="main">
+    <WalletAddress />
     <div class="total-balance">
       <p class="label">Total balance</p>
       <p class="value">${{ totalBalance.toFixed(2) }}</p>
@@ -14,7 +15,7 @@
         </div>
         <div class="wrap-token-value">
           <p class="token-value">{{ balance.amount }}</p>
-          <p class="token-value-fiat">({{ balance.usdValue }} USD)</p>
+          <p class="token-value-fiat">${{ balance.usdValue }}</p>
         </div>
       </li>
     </ul>
@@ -25,9 +26,10 @@
 import { ref, onMounted, computed } from 'vue'
 import Web3 from 'web3'
 import axios from 'axios'
+import BigNumber from 'bignumber.js'
 import { erc20Abi } from './components/erc20abi.js'
 import { tokens } from './components/tokens.js'
-import BigNumber from 'bignumber.js'
+import WalletAddress from './components/WalletAddress.vue'
 
 const tokenBalances = ref<Record<string, { amount: BigNumber; usdValue: number; coinId: string }>>(
   {}
