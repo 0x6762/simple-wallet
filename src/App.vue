@@ -37,10 +37,10 @@ export default defineComponent({
 
     onMounted(async () => {
       const web3 = new Web3('https://rpc-mainnet.maticvigil.com')
-      const address = '0xc834bD2C217835E770b3Ba3d6c1D38eD45d5c291'
+      const walletAddress = '0xc834bD2C217835E770b3Ba3d6c1D38eD45d5c291'
 
       // Get the MATIC balance of the address
-      const balanceWei = await web3.eth.getBalance(address)
+      const balanceWei = await web3.eth.getBalance(walletAddress)
       let maticBalance = web3.utils.fromWei(balanceWei, 'ether')
 
       // Format the balance to display only three decimal places
@@ -73,7 +73,7 @@ export default defineComponent({
       for (const token of tokens) {
         const contract = new web3.eth.Contract(erc20Abi, token.contractAddress)
         const tokenName = token.tokenName
-        const balanceWei = await contract.methods.balanceOf(address).call()
+        const balanceWei = await contract.methods.balanceOf(walletAddress).call()
         const decimals = await contract.methods.decimals().call()
 
         console.log(`Token Name: ${tokenName}`)
