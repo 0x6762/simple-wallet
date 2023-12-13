@@ -40,7 +40,7 @@ onMounted(async () => {
   const web3 = new Web3('https://rpc-mainnet.maticvigil.com')
   const walletAddress = localStorage.getItem('walletAddress')
 
-  // Check if the walletAddress is valid before calling web3
+  // Check if the walletAddress is valid address
   if (walletAddress && isAddress(walletAddress)) {
     // Get the MATIC balance of the address
     const balanceWei = await web3.eth.getBalance(walletAddress)
@@ -145,7 +145,7 @@ const totalBalance = computed(() => {
 
 .total-balance {
   background-color: var(--color-surface);
-  margin-top: 16px;
+  margin-top: 8px;
   padding: 24px 24px;
   border-radius: 16px;
   .label {
