@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue'
+import { ref } from 'vue'
 
 // Initialize walletAddress with value from local storage or an empty string
 const walletAddress = ref(localStorage.getItem('walletAddress') || '')

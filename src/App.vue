@@ -25,6 +25,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import Web3 from 'web3'
+import { isAddress } from 'web3-validator'
 import axios from 'axios'
 import BigNumber from 'bignumber.js'
 import { erc20Abi } from './components/erc20abi.js'
@@ -40,7 +41,7 @@ onMounted(async () => {
   const walletAddress = localStorage.getItem('walletAddress')
 
   // Check if the walletAddress is valid before calling web3
-  if (walletAddress && web3.utils.isAddress(walletAddress)) {
+  if (walletAddress && isAddress(walletAddress)) {
     // Get the MATIC balance of the address
     const balanceWei = await web3.eth.getBalance(walletAddress)
     let maticBalance = web3.utils.fromWei(balanceWei, 'ether')
