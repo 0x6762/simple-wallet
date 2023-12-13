@@ -26,6 +26,7 @@ import { defineComponent, ref, onMounted, computed } from 'vue'
 import Web3 from 'web3'
 import axios from 'axios'
 import { erc20Abi } from './components/erc20abi.js'
+import { tokens } from './components/tokens.js'
 import BigNumber from 'bignumber.js'
 
 export default defineComponent({
@@ -35,25 +36,6 @@ export default defineComponent({
     onMounted(async () => {
       const web3 = new Web3('https://rpc-mainnet.maticvigil.com')
       const address = '0xc834bD2C217835E770b3Ba3d6c1D38eD45d5c291'
-
-      const tokens = [
-        {
-          contractAddress: '0x6d80113e533a2C0fe82EaBD35f1875DcEA89Ea97',
-          coinId: 'aave-polygon-wmatic',
-          tokenName: 'Aave WMATIC'
-        },
-        {
-          contractAddress: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
-          coinId: 'tether',
-          tokenName: 'USDT'
-        },
-        {
-          contractAddress: '0x1d734A02eF1e1f5886e66b0673b71Af5B53ffA94',
-          coinId: 'stader',
-          tokenName: 'Stader'
-        }
-        // Add more tokens as needed
-      ]
 
       // Get the MATIC balance of the address
       const balanceWei = await web3.eth.getBalance(address)
