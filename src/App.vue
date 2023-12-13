@@ -31,7 +31,9 @@ import BigNumber from 'bignumber.js'
 
 export default defineComponent({
   setup() {
-    const tokenBalances = ref({})
+    const tokenBalances = ref<
+      Record<string, { amount: BigNumber; usdValue: number; coinId: string }>
+    >({})
 
     onMounted(async () => {
       const web3 = new Web3('https://rpc-mainnet.maticvigil.com')
@@ -91,22 +93,19 @@ export default defineComponent({
           continue
         }
 
-        // Convert the contract address to a CoinGecko coinId using the mapping
-        const coinId = token.coinId
-
         // Fetch the current price of the token in USD
         let priceInUsd = 0
         try {
           const response = await axios.get(
-            `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`
+            `https://api.coingecko.com/api/v3/simple/price?ids=${token.coinId}&vs_currencies=usd`
           )
-          priceInUsd = response.data[coinId]?.usd
+          priceInUsd = response.data[token.coinId]?.usd
         } catch (error) {
-          console.error(`Error fetching price for coin ${coinId}:`, error)
+          console.error(`Error fetching price for coin ${token.coinId}:`, error)
         }
 
         if (!priceInUsd) {
-          console.error(`Unable to fetch price for coin ${coinId}`)
+          console.error(`Unable to fetch price for coin ${token.coinId}`)
           continue
         }
 
@@ -117,12 +116,13 @@ export default defineComponent({
           tokenBalances.value[tokenName] = {
             amount: balance,
             usdValue: usdValue.toFixed(2),
-            coinId: coinId // Add this line
+            coinId: token.coinId // Add this line
           }
         }
       }
     })
 
+    // Calculate the total balance in USD
     const totalBalance = computed(() => {
       return Object.values(tokenBalances.value).reduce((total, balance) => {
         return total + parseFloat(balance.usdValue)
