@@ -40,7 +40,7 @@ onMounted(async () => {
   const walletAddress = localStorage.getItem('walletAddress')
 
   // Check if the walletAddress is valid before calling web3
-  if (walletAddress) {
+  if (walletAddress && web3.utils.isAddress(walletAddress)) {
     // Get the MATIC balance of the address
     const balanceWei = await web3.eth.getBalance(walletAddress)
     let maticBalance = web3.utils.fromWei(balanceWei, 'ether')
@@ -122,6 +122,8 @@ onMounted(async () => {
         }
       }
     }
+  } else {
+    console.log(`Invalid address: ${walletAddress}`)
   }
 })
 
