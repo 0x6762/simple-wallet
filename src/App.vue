@@ -37,86 +37,89 @@ const tokenBalances = ref<Record<string, { amount: BigNumber; usdValue: number; 
 
 onMounted(async () => {
   const web3 = new Web3('https://rpc-mainnet.maticvigil.com')
-  const walletAddress = '0xc834bD2C217835E770b3Ba3d6c1D38eD45d5c291'
+  const walletAddress = localStorage.getItem('walletAddress')
 
-  // Get the MATIC balance of the address
-  const balanceWei = await web3.eth.getBalance(walletAddress)
-  let maticBalance = web3.utils.fromWei(balanceWei, 'ether')
+  // Check if the walletAddress is valid before calling web3
+  if (walletAddress) {
+    // Get the MATIC balance of the address
+    const balanceWei = await web3.eth.getBalance(walletAddress)
+    let maticBalance = web3.utils.fromWei(balanceWei, 'ether')
 
-  // Format the balance to display only three decimal places
-  maticBalance = parseFloat(maticBalance).toFixed(3)
+    // Format the balance to display only three decimal places
+    maticBalance = parseFloat(maticBalance).toFixed(3)
 
-  // Fetch the current price of MATIC in USD
-  let maticPriceInUsd = 0
-  try {
-    const response = await axios.get(
-      `https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd`
-    )
-    maticPriceInUsd = response.data['matic-network']?.usd
-  } catch (error) {
-    console.error(`Error fetching price for MATIC:`, error)
-  }
-
-  // Calculate the MATIC balance in USD
-  const maticUsdValue = parseFloat(maticBalance) * maticPriceInUsd
-
-  // Add MATIC balance to tokenBalances
-  if (parseFloat(maticBalance) > 0) {
-    tokenBalances.value['MATIC'] = {
-      amount: maticBalance,
-      usdValue: maticUsdValue.toFixed(2),
-      coinId: 'matic-network'
-    }
-  }
-
-  // Get the list of addresses from the contractAddresses array
-  for (const token of tokens) {
-    const contract = new web3.eth.Contract(erc20Abi, token.contractAddress)
-    const tokenName = token.tokenName
-    const balanceWei = await contract.methods.balanceOf(walletAddress).call()
-    const decimals = await contract.methods.decimals().call()
-
-    console.log(`Token Name: ${tokenName}`)
-    console.log(`Balance Wei: ${balanceWei}`)
-    console.log(`Decimals: ${decimals}`)
-
-    // Use BigNumber for calculations
-    let balance = new BigNumber(balanceWei).div(new BigNumber(10).pow(decimals))
-
-    // Convert to Number with desired precision before logging
-    balance = Number(balance.toFixed(3))
-    console.log(`Balance: ${balance}`)
-
-    // // Hide tokens with low balance
-    if (balance < 0.001) {
-      console.log(`No balance for token ${tokenName}`)
-      continue
-    }
-
-    // Fetch the current price of the token in USD
-    let priceInUsd = 0
+    // Fetch the current price of MATIC in USD
+    let maticPriceInUsd = 0
     try {
       const response = await axios.get(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${token.coinId}&vs_currencies=usd`
+        `https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd`
       )
-      priceInUsd = response.data[token.coinId]?.usd
+      maticPriceInUsd = response.data['matic-network']?.usd
     } catch (error) {
-      console.error(`Error fetching price for coin ${token.coinId}:`, error)
+      console.error(`Error fetching price for MATIC:`, error)
     }
 
-    if (!priceInUsd) {
-      console.error(`Unable to fetch price for coin ${token.coinId}`)
-      continue
+    // Calculate the MATIC balance in USD
+    const maticUsdValue = parseFloat(maticBalance) * maticPriceInUsd
+
+    // Add MATIC balance to tokenBalances
+    if (parseFloat(maticBalance) > 0) {
+      tokenBalances.value['MATIC'] = {
+        amount: maticBalance,
+        usdValue: maticUsdValue.toFixed(2),
+        coinId: 'matic-network'
+      }
     }
 
-    // Calculate the balance in USD
-    const usdValue = parseFloat(balance) * priceInUsd
+    // Get the list of addresses from the contractAddresses array
+    for (const token of tokens) {
+      const contract = new web3.eth.Contract(erc20Abi, token.contractAddress)
+      const tokenName = token.tokenName
+      const balanceWei = await contract.methods.balanceOf(walletAddress).call()
+      const decimals = await contract.methods.decimals().call()
 
-    if (parseFloat(balance) > 0) {
-      tokenBalances.value[tokenName] = {
-        amount: balance,
-        usdValue: usdValue.toFixed(2),
-        coinId: token.coinId // Add this line
+      console.log(`Token Name: ${tokenName}`)
+      console.log(`Balance Wei: ${balanceWei}`)
+      console.log(`Decimals: ${decimals}`)
+
+      // Use BigNumber for calculations
+      let balance = new BigNumber(balanceWei).div(new BigNumber(10).pow(decimals))
+
+      // Convert to Number with desired precision before logging
+      balance = Number(balance.toFixed(3))
+      console.log(`Balance: ${balance}`)
+
+      // // Hide tokens with low balance
+      if (balance < 0.001) {
+        console.log(`No balance for token ${tokenName}`)
+        continue
+      }
+
+      // Fetch the current price of the token in USD
+      let priceInUsd = 0
+      try {
+        const response = await axios.get(
+          `https://api.coingecko.com/api/v3/simple/price?ids=${token.coinId}&vs_currencies=usd`
+        )
+        priceInUsd = response.data[token.coinId]?.usd
+      } catch (error) {
+        console.error(`Error fetching price for coin ${token.coinId}:`, error)
+      }
+
+      if (!priceInUsd) {
+        console.error(`Unable to fetch price for coin ${token.coinId}`)
+        continue
+      }
+
+      // Calculate the balance in USD
+      const usdValue = parseFloat(balance) * priceInUsd
+
+      if (parseFloat(balance) > 0) {
+        tokenBalances.value[tokenName] = {
+          amount: balance,
+          usdValue: usdValue.toFixed(2),
+          coinId: token.coinId // Add this line
+        }
       }
     }
   }
