@@ -1,8 +1,5 @@
 <template>
   <div class="main">
-    <div class="wrap-address">
-      <input type="text" class="address" placeholder="Input your address..." v-model="address" />
-    </div>
     <div class="total-balance">
       <p class="label">Total balance</p>
       <p class="value">${{ totalBalance.toFixed(2) }}</p>
@@ -32,39 +29,33 @@ import { erc20Abi } from './components/erc20abi.js'
 
 export default defineComponent({
   setup() {
-    const address = ref('')
     const tokenBalances = ref({})
 
     onMounted(async () => {
       const web3 = new Web3('https://rpc-mainnet.maticvigil.com')
-      // Wallet address to check the balance of
-      const addressValue = address.value
-      //
-      const contractAddresses = [
-        '0x6d80113e533a2C0fe82EaBD35f1875DcEA89Ea97',
-        '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
-        '0x1d734A02eF1e1f5886e66b0673b71Af5B53ffA94'
-        // Add other contract addresses here
+      const address = '0xc834bD2C217835E770b3Ba3d6c1D38eD45d5c291'
+
+      const tokens = [
+        {
+          contractAddress: '0x6d80113e533a2C0fe82EaBD35f1875DcEA89Ea97',
+          coinId: 'aave-polygon-wmatic',
+          tokenName: 'Aave WMATIC'
+        },
+        {
+          contractAddress: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
+          coinId: 'tether',
+          tokenName: 'USDT'
+        },
+        {
+          contractAddress: '0x1d734A02eF1e1f5886e66b0673b71Af5B53ffA94',
+          coinId: 'stader',
+          tokenName: 'Stader'
+        }
+        // Add more tokens as needed
       ]
 
-      // Create a mapping between contract coinIds and CoinGecko coinIds
-      const coinIdMapping = {
-        '0x6d80113e533a2C0fe82EaBD35f1875DcEA89Ea97': 'aave-polygon-wmatic',
-        '0xc2132D05D31c914a87C6611C10748AEb04B58e8F': 'tether',
-        '0x1d734A02eF1e1f5886e66b0673b71Af5B53ffA94': 'stader'
-        // Add more mappings as needed
-      }
-
-      // Create a mapping between contract addresses and token names
-      const tokenNameMapping = {
-        '0x6d80113e533a2C0fe82EaBD35f1875DcEA89Ea97': 'Aave WMATIC',
-        '0xc2132D05D31c914a87C6611C10748AEb04B58e8F': 'USDT',
-        '0x1d734A02eF1e1f5886e66b0673b71Af5B53ffA94': 'Stader'
-        // Add more mappings as needed
-      }
-
       // Get the MATIC balance of the address
-      const balanceWei = await web3.eth.getBalance(addressValue)
+      const balanceWei = await web3.eth.getBalance(address)
       let maticBalance = web3.utils.fromWei(balanceWei, 'ether')
 
       // Format the balance to display only three decimal places
@@ -93,34 +84,37 @@ export default defineComponent({
         }
       }
 
-      // Get the balance of each token
-      for (const contractAddress of contractAddresses) {
-        const contract = new web3.eth.Contract(erc20Abi, contractAddress)
-        // Use the token name from the mapping
-        const tokenName = tokenNameMapping[contractAddress]
+      // Get the list of addresses from the contractAddresses array
+      for (const token of tokens) {
+        const contract = new web3.eth.Contract(erc20Abi, token.contractAddress)
+        const tokenName = token.tokenName
         const balanceWei = await contract.methods.balanceOf(address).call()
         const decimals = await contract.methods.decimals().call()
+        console.log(`Token Name: ${tokenName}`)
+        console.log(`Decimals: ${decimals}`)
         let balance
-        if (contractAddress === '0xc2132D05D31c914a87C6611C10748AEb04B58e8F') {
+        if (token.contractAddress === '0xc2132D05D31c914a87C6611C10748AEb04B58e8F') {
           const ten = BigInt(10)
           const bigIntDecimals = BigInt(decimals)
           balance = Number(BigInt(balanceWei) / ten ** bigIntDecimals)
-          balance = Number(balance.toFixed(10))
         } else {
           balance = web3.utils.fromWei(balanceWei, 'ether')
         }
 
-        // Format the balance to display only three decimal places
-        balance = (Math.floor(balance * 1e3) / 1e3).toFixed(3)
+        // Check if balance is a number before formatting
+        if (typeof balance === 'number') {
+          // Format the balance to display only three decimal places
+          balance = Number(balance.toFixed(3))
+        }
 
         // If the balance is zero, log a message and continue to the next token
-        if (parseFloat(balance) === 0) {
+        if (balance === 0) {
           console.log(`No balance for token ${tokenName}`)
           continue
         }
 
         // Convert the contract address to a CoinGecko coinId using the mapping
-        const coinId = coinIdMapping[contractAddress]
+        const coinId = token.coinId
 
         // Fetch the current price of the token in USD
         let priceInUsd = 0
