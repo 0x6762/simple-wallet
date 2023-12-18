@@ -7,6 +7,10 @@
   border: 0;
 }
 
+input {
+  outline: none;
+}
+
 :root {
   --color-primary: #2a2a72;
   --color-secondary: #009ffd;
@@ -25,6 +29,8 @@
   --gray700: #777777;
   --gray800: #888888;
   --gray900: #999999;
+
+  --white: #ffffff;
 }
 
 body {
