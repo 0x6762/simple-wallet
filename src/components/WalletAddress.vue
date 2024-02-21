@@ -31,11 +31,13 @@ const updateWalletAddress = () => {
   walletAddress.value = inputValue.value
   localStorage.setItem('walletAddress', inputValue.value)
   inputValue.value = ''
+  window.location.reload()
 }
 
 const removeWalletAddress = () => {
   localStorage.removeItem('walletAddress')
   walletAddress.value = ''
+  window.location.reload()
 }
 </script>
 
